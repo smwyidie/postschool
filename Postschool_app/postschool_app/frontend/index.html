@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>POSTSCHOOL — Навигатор по вузам России</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Montserrat:wght@300;400;500;600&display=swap&subset=cyrillic,cyrillic-ext,latin" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+  :root{
+    --bg:#0c0b0a;
+    --bg-2:#100f0d;
+    --surface:#1a1814;
+    --surface-2:#211e19;
+    --line:#2c2823;
+    --line-soft:#241f1a;
+    --gold:#c9a55c;
+    --gold-bright:#e6cd92;
+    --gold-deep:#a8863f;
+    --text:#ece7dd;
+    --muted:#8b847799;
+    --muted-2:#8b8477;
+    --faint:#5d574c;
+    --good:#c9a55c;
+    --radius:6px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:
+      radial-gradient(1200px 700px at 75% -10%, #161310 0%, transparent 60%),
+      radial-gradient(900px 600px at 0% 100%, #131110 0%, transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Montserrat',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  #root{min-height:100vh}
+  ::selection{background:var(--gold-deep);color:#0c0b0a}
+  .serif{font-family:'Playfair Display',Georgia,serif}
+  .label{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--faint);font-weight:500}
+  .gold{color:var(--gold)}
+  button{font-family:inherit;cursor:pointer;color:inherit;border:none;background:none}
+  input,select{font-family:inherit}
+  a{color:inherit}
+
+  /* ---- shared chrome ---- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;
+    padding:18px 34px;border-bottom:1px solid var(--line-soft);position:sticky;top:0;z-index:30;
+    background:rgba(12,11,10,.82);backdrop-filter:blur(10px)}
+  .logo{font-family:'Playfair Display',serif;font-weight:600;letter-spacing:.34em;font-size:19px;
+    cursor:pointer;user-select:none;white-space:nowrap}
+  .logo .a{color:var(--gold)} .logo .b{color:var(--text)}
+  .nav-mid{display:flex;gap:30px}
+  .nav-mid button{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted-2);
+    padding:6px 0;transition:color .2s}
+  .nav-mid button:hover,.nav-mid button.on{color:var(--gold)}
+  .btn{font-size:11px;letter-spacing:.16em;text-transform:uppercase;padding:11px 20px;border-radius:var(--radius);
+    transition:all .2s;font-weight:500}
+  .btn-ghost{border:1px solid var(--line);color:var(--text)}
+  .btn-ghost:hover{border-color:var(--gold-deep);color:var(--gold)}
+  .btn-gold{border:1px solid var(--gold-deep);color:var(--gold);background:linear-gradient(180deg,#1f1b14,#171410)}
+  .btn-gold:hover{background:linear-gradient(180deg,#2a2417,#1d1810);border-color:var(--gold)}
+  .btn-solid{background:linear-gradient(180deg,#d9b873,#bb9648);color:#1a1407;border:1px solid var(--gold);font-weight:600}
+  .btn-solid:hover{background:linear-gradient(180deg,#e6cd92,#c9a55c)}
+
+  /* ---- landing ---- */
+  .hero{position:relative;min-height:calc(100vh - 64px);display:flex;flex-direction:column;justify-content:center;
+    padding:0 clamp(28px,7vw,110px);overflow:hidden}
+  .hero::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(700px 500px at 80% 40%, rgba(201,165,92,.06), transparent 60%);pointer-events:none}
+  .eyebrow{display:inline-block;border:1px solid var(--gold-deep);color:var(--gold);
+    font-size:10px;letter-spacing:.26em;text-transform:uppercase;padding:8px 16px;border-radius:4px;margin-bottom:30px;
+    align-self:flex-start}
+  .hero h1{font-family:'Playfair Display',serif;font-weight:600;line-height:1.02;
+    font-size:clamp(44px,7.5vw,96px);letter-spacing:-.01em;max-width:14ch}
+  .hero h1 em{font-style:italic;color:var(--gold);display:block}
+  .hero p{margin-top:26px;color:var(--muted-2);font-size:13px;letter-spacing:.14em;text-transform:uppercase;
+    line-height:2;max-width:60ch}
+  .hero-cta{margin-top:40px;display:flex;gap:14px;flex-wrap:wrap}
+  .hero-stats{position:absolute;right:clamp(28px,7vw,110px);bottom:48px;display:flex;gap:42px;text-align:right}
+  .hero-stats .n{font-family:'Playfair Display',serif;font-size:34px;color:var(--gold)}
+  .hero-stats .l{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-top:4px}
+  @media(max-width:760px){.hero-stats{display:none}}
+
+  /* ---- auth ---- */
+  .auth-wrap{min-height:calc(100vh - 64px);display:flex;align-items:center;justify-content:center;padding:40px 20px}
+  .auth-card{width:100%;max-width:360px;background:linear-gradient(180deg,#181612,#141210);
+    border:1px solid var(--line);border-radius:10px;padding:42px 40px}
+  .auth-card h2{font-family:'Playfair Display',serif;font-weight:600;font-size:30px;margin-bottom:6px}
+  .auth-sub{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-bottom:28px}
+  .field{margin-bottom:18px}
+  .field>span{display:block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
+  .inp{width:100%;background:#0f0d0b;border:1px solid var(--line);border-radius:var(--radius);
+    padding:13px 14px;color:var(--text);font-size:14px;transition:border-color .2s}
+  .inp::placeholder{color:#4f4a40}
+  .inp:focus{outline:none;border-color:var(--gold-deep)}
+  .auth-foot{text-align:center;font-size:12px;color:var(--muted-2);margin-top:18px}
+  .auth-foot button{color:var(--gold);font-weight:600}
+  .ghost-link{display:block;text-align:center;margin-top:14px;font-size:11px;letter-spacing:.1em;color:var(--faint)}
+  .ghost-link:hover{color:var(--muted-2)}
+
+  /* ---- app shell ---- */
+  .shell{display:grid;grid-template-columns:230px 1fr;min-height:calc(100vh - 64px)}
+  .side{border-right:1px solid var(--line-soft);padding:30px 0;position:sticky;top:64px;align-self:start;height:calc(100vh - 64px)}
+  .side button{display:flex;align-items:center;gap:13px;width:100%;text-align:left;padding:13px 30px;
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted-2);transition:all .2s;position:relative}
+  .side button .dot{width:5px;height:5px;border:1px solid currentColor;transform:rotate(45deg);opacity:.6}
+  .side button:hover{color:var(--text)}
+  .side button.on{color:var(--gold);background:linear-gradient(90deg,rgba(201,165,92,.07),transparent)}
+  .side button.on::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--gold)}
+  .side button.on .dot{opacity:1;background:var(--gold);border-color:var(--gold)}
+  .main{padding:38px clamp(24px,4vw,54px) 80px;max-width:1180px}
+  .page-h{font-family:'Playfair Display',serif;font-weight:600;font-size:40px;line-height:1}
+  .page-sub{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-top:10px}
+  @media(max-width:820px){
+    .shell{grid-template-columns:1fr}
+    .side{position:static;height:auto;display:flex;overflow-x:auto;padding:8px 6px;border-right:none;border-bottom:1px solid var(--line-soft)}
+    .side button{padding:11px 16px;white-space:nowrap}
+    .side button.on::before{display:none}
+  }
+
+  /* ---- uni cards ---- */
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:20px;margin-top:30px}
+  .uni-card{background:linear-gradient(180deg,#1a1814,#151310);border:1px solid var(--line);border-radius:8px;
+    padding:24px 24px 22px;cursor:pointer;transition:all .22s;position:relative}
+  .uni-card:hover{border-color:var(--gold-deep);transform:translateY(-3px)}
+  .uni-card h3{font-family:'Playfair Display',serif;font-weight:600;font-size:30px;color:var(--gold);margin-bottom:8px}
+  .uni-card .full{font-size:12px;color:var(--muted-2);line-height:1.5;min-height:36px}
+  .uni-card .city{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin:14px 0 16px}
+  .uni-stats{display:flex;gap:26px;border-top:1px solid var(--line-soft);padding-top:16px}
+  .uni-stats .v{font-family:'Playfair Display',serif;font-size:21px}
+  .uni-stats .k{font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-top:3px}
+  .uni-price{margin-top:16px}
+  .uni-price .p{font-family:'Playfair Display',serif;font-size:20px;color:var(--text)}
+  .uni-price .pk{font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-top:2px}
+  .uni-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
+  .uni-tag{font-size:8px;letter-spacing:.12em;text-transform:uppercase;padding:5px 9px;border-radius:4px;
+    border:1px solid var(--line);color:var(--muted-2)}
+  .uni-tag.gold{border-color:var(--gold-deep);color:var(--gold)}
+  .about-list{background:linear-gradient(180deg,#161410,#121009);border:1px solid var(--line);border-radius:8px;
+    max-width:560px;overflow:hidden;margin-top:18px}
+  .about-item{display:flex;justify-content:space-between;align-items:center;padding:15px 22px;border-bottom:1px solid var(--line-soft)}
+  .about-item:last-child{border-bottom:none}
+  .about-item .k{font-size:12px;color:var(--muted-2)}
+  .about-item .v{font-family:'Playfair Display',serif;font-size:16px}
+  .about-item .v.no{color:var(--faint);font-size:13px}
+
+  /* ---- filters ---- */
+  .filters{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:26px}
+  .filters .inp{width:auto;min-width:150px;padding:10px 12px;font-size:12px}
+  select.inp{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%23a8863f'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;padding-right:30px}
+  .toggle-pill{font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:10px 16px;border-radius:var(--radius);
+    border:1px solid var(--line);color:var(--muted-2);transition:all .2s}
+  .toggle-pill.on{border-color:var(--gold-deep);color:var(--gold);background:rgba(201,165,92,.08)}
+
+  /* ---- podbor / scores ---- */
+  .panel{background:linear-gradient(180deg,#161410,#121008);border:1px solid var(--line);border-radius:10px;padding:30px}
+  .panel h2{font-family:'Playfair Display',serif;font-weight:600;font-size:26px;margin-bottom:24px}
+  .grid-scores{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+  @media(max-width:900px){.grid-scores{grid-template-columns:repeat(2,1fr)}}
+  .sc-field span{display:block;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-bottom:7px}
+  .sc-field input{width:100%;background:#0f0d0b;border:1px solid var(--line);border-radius:5px;
+    padding:11px 12px;color:var(--text);font-size:15px;font-family:'Playfair Display',serif}
+  .sc-field input:focus{outline:none;border-color:var(--gold-deep)}
+  .bonus-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+
+  /* ---- result rows ---- */
+  .res-tabs{display:flex;gap:26px;border-bottom:1px solid var(--line-soft);margin:34px 0 8px}
+  .res-tabs button{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);padding:0 2px 14px;
+    position:relative}
+  .res-tabs button.on{color:var(--text)}
+  .res-tabs button.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--gold)}
+  .res-row{display:flex;align-items:center;gap:18px;background:linear-gradient(180deg,#161410,#121009);
+    border:1px solid var(--line-soft);border-radius:8px;padding:16px 20px;margin-top:12px;transition:border-color .2s}
+  .res-row:hover{border-color:var(--line)}
+  .res-badge{width:46px;height:46px;border-radius:5px;background:#0f0d0b;border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;font-size:9px;letter-spacing:.08em;color:var(--gold);flex-shrink:0;text-align:center;line-height:1.2}
+  .res-name{flex:1;min-width:0}
+  .res-name .t{font-size:14px;font-weight:500;color:var(--text)}
+  .res-name .m{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-top:4px}
+  .res-score{text-align:center}
+  .res-score .big{font-family:'Playfair Display',serif;font-size:24px;line-height:1}
+  .res-score .small{font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-top:4px}
+  .status{font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:7px 12px;border-radius:4px;white-space:nowrap}
+  .status.pass{border:1px solid var(--gold-deep);color:var(--gold)}
+  .status.close{border:1px solid #6b5a36;color:#b89a5e;opacity:.85}
+  .status.far{border:1px solid var(--line);color:var(--faint)}
+  .heart{width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--faint);transition:.2s;flex-shrink:0}
+  .heart.on{color:var(--gold)}
+  .heart:hover{color:var(--gold-bright)}
+  @media(max-width:680px){
+    .res-score{display:none}
+    .res-row{flex-wrap:wrap}
+  }
+
+  /* ---- olympiads ---- */
+  .oly-row{display:flex;align-items:center;justify-content:space-between;gap:16px;
+    background:linear-gradient(180deg,#161410,#121009);border:1px solid var(--line-soft);border-radius:8px;
+    padding:18px 22px;margin-top:12px}
+  .oly-row .t{font-size:14px;font-weight:500}
+  .oly-row .m{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-top:5px}
+  .oly-tag{border:1px solid var(--gold-deep);color:var(--gold);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+    padding:8px 14px;border-radius:4px;white-space:nowrap;text-align:center}
+
+  /* ---- profile ---- */
+  .prof-id{display:flex;align-items:center;gap:18px;margin:28px 0 24px}
+  .avatar{width:74px;height:74px;border:1px solid var(--gold-deep);border-radius:6px;display:flex;align-items:center;
+    justify-content:center;font-family:'Playfair Display',serif;font-size:32px;color:var(--gold)}
+  .prof-name{font-family:'Playfair Display',serif;font-size:26px}
+  .prof-mail{font-size:11px;letter-spacing:.1em;color:var(--faint);margin-top:2px}
+  .stat-list{background:linear-gradient(180deg,#161410,#121009);border:1px solid var(--line);border-radius:8px;
+    max-width:520px;overflow:hidden}
+  .stat-item{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid var(--line-soft)}
+  .stat-item:last-child{border-bottom:none}
+  .stat-item .k{font-size:13px;color:var(--muted-2)}
+  .stat-item .v{font-family:'Playfair Display',serif;font-size:18px}
+  .stat-item .v.no{color:var(--faint);font-size:14px}
+
+  /* ---- uni detail ---- */
+  .back-link{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted-2);margin-bottom:22px;display:inline-flex;gap:8px;align-items:center}
+  .back-link:hover{color:var(--gold)}
+  .detail-tabs{display:flex;gap:28px;border-bottom:1px solid var(--line-soft);margin:26px 0 6px}
+  .detail-tabs button{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);padding:0 2px 14px;position:relative}
+  .detail-tabs button.on{color:var(--text)}
+  .detail-tabs button.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--gold)}
+  .city-card{background:linear-gradient(180deg,#161410,#121009);border:1px solid var(--line);border-radius:8px;padding:28px;margin-top:18px;max-width:640px}
+  .city-card h4{font-family:'Playfair Display',serif;font-size:24px;color:var(--gold);margin-bottom:6px}
+  .city-card p{color:var(--muted-2);line-height:1.8;font-size:13px;margin-top:12px}
+  .city-facts{display:flex;gap:34px;margin-top:22px;flex-wrap:wrap}
+  .city-facts .v{font-family:'Playfair Display',serif;font-size:22px}
+  .city-facts .k{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-top:3px}
+  .empty{color:var(--faint);font-size:13px;letter-spacing:.08em;padding:50px 0;text-align:center}
+
+  .fadein{animation:fade .4s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState, useMemo, useEffect, useRef} = React;
+
+/* ============ API CLIENT ============ */
+const API = "";
+let TOKEN = localStorage.getItem("ps_token") || null;
+const authHeaders = () => TOKEN ? {Authorization: "Bearer " + TOKEN} : {};
+const api = {
+  get token(){ return TOKEN; },
+  setToken(t){ TOKEN = t; if(t) localStorage.setItem("ps_token", t); else localStorage.removeItem("ps_token"); },
+  async register(full_name, email, password){
+    const r = await fetch(API+"/api/auth/register", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({full_name, email, password})});
+    if(!r.ok) throw new Error((await r.json().catch(()=>({}))).detail || "Ошибка регистрации");
+    const d = await r.json(); api.setToken(d.access_token); return d;
+  },
+  async login(email, password){
+    const r = await fetch(API+"/api/auth/login", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email, password})});
+    if(!r.ok) throw new Error((await r.json().catch(()=>({}))).detail || "Неверный email или пароль");
+    const d = await r.json(); api.setToken(d.access_token); return d;
+  },
+  async me(){ const r = await fetch(API+"/api/auth/me", {headers:authHeaders()}); return r.ok ? r.json() : null; },
+  async profileGet(){ const r = await fetch(API+"/api/profile", {headers:authHeaders()}); return r.ok ? r.json() : null; },
+  async profilePut(scores, bonuses){ await fetch(API+"/api/profile", {method:"PUT", headers:{"Content-Type":"application/json", ...authHeaders()}, body:JSON.stringify({scores, bonuses})}); },
+  async favList(){ const r = await fetch(API+"/api/favorites", {headers:authHeaders()}); return r.ok ? r.json() : []; },
+  async favAdd(id){ await fetch(API+"/api/favorites/"+id, {method:"POST", headers:authHeaders()}); },
+  async favDel(id){ await fetch(API+"/api/favorites/"+id, {method:"DELETE", headers:authHeaders()}); },
+};
+
+/* ============ DATA ============ */
+const SUBJECTS = [
+  {k:'rus', n:'Русский язык'}, {k:'mat', n:'Математика'}, {k:'fiz', n:'Физика'},
+  {k:'him', n:'Химия'}, {k:'bio', n:'Биология'}, {k:'inf', n:'Информатика'},
+  {k:'ist', n:'История'}, {k:'obs', n:'Обществознание'}, {k:'geo', n:'География'},
+  {k:'lit', n:'Литература'},
+];
+
+let CITIES = {
+  'Краснодар':{
+    desc:'Столица Кубани и один из крупнейших студенческих центров Юга России. Мягкий климат, доступное жильё и насыщенная городская среда делают его комфортным для иногородних абитуриентов.',
+    pop:'≈ 1,1 млн', clim:'Тёплый', life:'Высокая'
+  },
+  'Ростов-на-Дону':{
+    desc:'«Ворота Кавказа» на берегу Дона — крупный экономический и образовательный узел Юга. Сильные инженерные и гуманитарные школы, развитая инфраструктура и активная студенческая жизнь.',
+    pop:'≈ 1,1 млн', clim:'Умеренный', life:'Высокая'
+  },
+  'Москва':{
+    desc:'Столица России и центр с максимальным числом возможностей: ведущие вузы, стажировки, гранты. Самый высокий конкурс и проходные баллы, но и наибольший выбор направлений.',
+    pop:'≈ 13 млн', clim:'Умеренный', life:'Максимальная'
+  },
+  'Новосибирск':{
+    desc:'Третий по численности город России и крупнейший научно-образовательный центр Сибири. Рядом расположен Академгородок с сильными физико-математическими и IT-школами.',
+    pop:'≈ 1,6 млн', clim:'Континентальный', life:'Высокая'
+  },
+  'Екатеринбург':{
+    desc:'Столица Урала, крупный промышленный и студенческий центр на границе Европы и Азии. Развитая инженерная школа и насыщенная городская среда.',
+    pop:'≈ 1,5 млн', clim:'Континентальный', life:'Высокая'
+  },
+  'Иннополис':{
+    desc:'Молодой город-спутник Казани, созданный как центр IT и высоких технологий. Компактная среда, полностью ориентированная на студентов и специалистов в области информатики.',
+    pop:'≈ 9 тыс.', clim:'Умеренный', life:'Камерная'
+  },
+  'Санкт-Петербург':{
+    desc:'Культурная столица России и второй по величине город страны. Сильные классические и технические вузы, развитая научная среда и насыщенная студенческая жизнь.',
+    pop:'≈ 5,6 млн', clim:'Влажный, прохладный', life:'Очень высокая'
+  },
+};
+
+let UNIS = {
+  kubgu:{short:'КубГУ', full:'Кубанский государственный университет', city:'Краснодар', price:15000, mil:true, exams:false},
+  kubgau:{short:'КубГАУ', full:'Кубанский государственный аграрный университет', city:'Краснодар', price:12000, mil:false, exams:false},
+  kubgtu:{short:'КубГТУ', full:'Кубанский государственный технологический университет', city:'Краснодар', price:13000, mil:true, exams:false},
+  sfedu:{short:'ЮФУ', full:'Южный федеральный университет', city:'Ростов-на-Дону', price:18000, mil:true, exams:false},
+  donstu:{short:'ДГТУ', full:'Донской государственный технический университет', city:'Ростов-на-Дону', price:14000, mil:true, exams:false},
+  mirea:{short:'РТУ МИРЭА', full:'Российский технологический университет', city:'Москва', price:22000, mil:true, exams:false},
+  bmstu:{short:'МГТУ им. Баумана', full:'Московский государственный технический университет им. Н.Э. Баумана', city:'Москва', price:26000, mil:true, exams:false},
+  mipt:{short:'МФТИ', full:'Московский физико-технический институт', city:'Москва', price:30000, mil:true, exams:true},
+  nsu:{short:'НГУ', full:'Новосибирский государственный университет', city:'Новосибирск', price:17000, mil:true, exams:false},
+  urfu:{short:'УрФУ', full:'Уральский федеральный университет им. Б.Н. Ельцина', city:'Екатеринбург', price:16000, mil:true, exams:false},
+  innopolis:{short:'Иннополис', full:'Университет Иннополис', city:'Иннополис', price:35000, mil:false, exams:true},
+  spbu:{short:'СПбГУ', full:'Санкт-Петербургский государственный университет', city:'Санкт-Петербург', price:28000, mil:true, exams:true},
+  itmo:{short:'ИТМО', full:'Национальный исследовательский университет ИТМО', city:'Санкт-Петербург', price:24000, mil:false, exams:false},
+  spbpu:{short:'СПбПУ', full:'Санкт-Петербургский политехнический университет Петра Великого', city:'Санкт-Петербург', price:21000, mil:true, exams:false},
+};
+
+let DIRECTIONS = [
+  // КубГУ
+  {id:'d1', uni:'kubgu', name:'Прикладная математика и информатика', code:'01.03.02', thr:230, subj:['rus','mat','inf']},
+  {id:'d2', uni:'kubgu', name:'Экономика', code:'38.03.01', thr:210, subj:['rus','mat','obs']},
+  {id:'d3', uni:'kubgu', name:'Юриспруденция', code:'40.03.01', thr:245, subj:['rus','obs','ist']},
+  {id:'d4', uni:'kubgu', name:'Биология', code:'06.03.01', thr:175, subj:['rus','bio','him']},
+  {id:'d5', uni:'kubgu', name:'Журналистика', code:'42.03.02', thr:200, subj:['rus','lit','ist']},
+  // КубГАУ
+  {id:'d6', uni:'kubgau', name:'Агрономия', code:'35.03.04', thr:155, subj:['rus','bio','him']},
+  {id:'d7', uni:'kubgau', name:'Ветеринария', code:'36.05.01', thr:200, subj:['rus','bio','him']},
+  {id:'d8', uni:'kubgau', name:'Землеустройство и кадастры', code:'21.03.02', thr:165, subj:['rus','mat','geo']},
+  {id:'d9', uni:'kubgau', name:'Экономика', code:'38.03.01', thr:180, subj:['rus','mat','obs']},
+  {id:'d10', uni:'kubgau', name:'Зоотехния', code:'36.03.02', thr:160, subj:['rus','bio','mat']},
+  // КубГТУ
+  {id:'d11', uni:'kubgtu', name:'Информационные системы и технологии', code:'09.03.02', thr:220, subj:['rus','mat','inf']},
+  {id:'d12', uni:'kubgtu', name:'Программная инженерия', code:'09.03.04', thr:235, subj:['rus','mat','inf']},
+  {id:'d13', uni:'kubgtu', name:'Технология продуктов питания', code:'19.03.02', thr:175, subj:['rus','mat','him']},
+  {id:'d14', uni:'kubgtu', name:'Строительство', code:'08.03.01', thr:185, subj:['rus','mat','fiz']},
+  {id:'d15', uni:'kubgtu', name:'Химическая технология', code:'18.03.01', thr:155, subj:['rus','him','mat']},
+  // ЮФУ
+  {id:'d16', uni:'sfedu', name:'Программная инженерия', code:'09.03.04', thr:240, subj:['rus','mat','inf']},
+  {id:'d17', uni:'sfedu', name:'Психология', code:'37.03.01', thr:215, subj:['rus','bio','obs']},
+  {id:'d18', uni:'sfedu', name:'Лингвистика', code:'45.03.02', thr:230, subj:['rus','lit','ist']},
+  {id:'d19', uni:'sfedu', name:'Экономика', code:'38.03.01', thr:205, subj:['rus','mat','obs']},
+  // ДГТУ
+  {id:'d20', uni:'donstu', name:'Информатика и вычислительная техника', code:'09.03.01', thr:210, subj:['rus','mat','inf']},
+  {id:'d21', uni:'donstu', name:'Строительство', code:'08.03.01', thr:170, subj:['rus','mat','fiz']},
+  {id:'d22', uni:'donstu', name:'Дизайн', code:'54.03.01', thr:180, subj:['rus','lit','ist']},
+  // МИРЭА
+  {id:'d23', uni:'mirea', name:'Информационная безопасность', code:'10.03.01', thr:250, subj:['rus','mat','inf']},
+  {id:'d24', uni:'mirea', name:'Прикладная информатика', code:'09.03.03', thr:245, subj:['rus','mat','inf']},
+  {id:'d25', uni:'mirea', name:'Радиотехника', code:'11.03.01', thr:225, subj:['rus','mat','fiz']},
+  // МГТУ им. Баумана
+  {id:'d26', uni:'bmstu', name:'Информатика и вычислительная техника', code:'09.03.01', thr:255, subj:['rus','mat','inf']},
+  {id:'d27', uni:'bmstu', name:'Машиностроение', code:'15.03.01', thr:230, subj:['rus','mat','fiz']},
+  {id:'d28', uni:'bmstu', name:'Программная инженерия', code:'09.03.04', thr:260, subj:['rus','mat','inf']},
+  // МФТИ
+  {id:'d32', uni:'mipt', name:'Прикладные математика и физика', code:'03.03.01', thr:285, subj:['rus','mat','fiz']},
+  {id:'d33', uni:'mipt', name:'Прикладная математика и информатика', code:'01.03.02', thr:290, subj:['rus','mat','inf']},
+  {id:'d34', uni:'mipt', name:'Биотехнология', code:'19.03.01', thr:270, subj:['rus','mat','bio']},
+  // НГУ
+  {id:'d35', uni:'nsu', name:'Математика', code:'01.03.01', thr:240, subj:['rus','mat','inf']},
+  {id:'d36', uni:'nsu', name:'Физика', code:'03.03.02', thr:235, subj:['rus','mat','fiz']},
+  {id:'d37', uni:'nsu', name:'Информационные технологии', code:'09.03.01', thr:250, subj:['rus','mat','inf']},
+  // УрФУ
+  {id:'d38', uni:'urfu', name:'Программная инженерия', code:'09.03.04', thr:230, subj:['rus','mat','inf']},
+  {id:'d39', uni:'urfu', name:'Строительство', code:'08.03.01', thr:185, subj:['rus','mat','fiz']},
+  {id:'d40', uni:'urfu', name:'Экономика', code:'38.03.01', thr:210, subj:['rus','mat','obs']},
+  // Иннополис
+  {id:'d41', uni:'innopolis', name:'Информатика и вычислительная техника', code:'09.03.01', thr:260, subj:['rus','mat','inf']},
+  {id:'d42', uni:'innopolis', name:'Программная инженерия', code:'09.03.04', thr:265, subj:['rus','mat','inf']},
+  // СПбГУ
+  {id:'d43', uni:'spbu', name:'Программная инженерия', code:'09.03.04', thr:275, subj:['rus','mat','inf']},
+  {id:'d44', uni:'spbu', name:'Математика', code:'01.03.01', thr:270, subj:['rus','mat','inf']},
+  {id:'d45', uni:'spbu', name:'Юриспруденция', code:'40.03.01', thr:280, subj:['rus','obs','ist']},
+  // ИТМО
+  {id:'d46', uni:'itmo', name:'Прикладная математика и информатика', code:'01.03.02', thr:280, subj:['rus','mat','inf']},
+  {id:'d47', uni:'itmo', name:'Информатика и вычислительная техника', code:'09.03.01', thr:270, subj:['rus','mat','inf']},
+  {id:'d48', uni:'itmo', name:'Фотоника и оптоинформатика', code:'12.03.03', thr:250, subj:['rus','mat','fiz']},
+  // СПбПУ
+  {id:'d49', uni:'spbpu', name:'Информатика и вычислительная техника', code:'09.03.01', thr:240, subj:['rus','mat','inf']},
+  {id:'d50', uni:'spbpu', name:'Строительство', code:'08.03.01', thr:200, subj:['rus','mat','fiz']},
+  {id:'d51', uni:'spbpu', name:'Машиностроение', code:'15.03.01', thr:210, subj:['rus','mat','fiz']},
+];
+
+let OLYMPIADS = [
+  {t:'Всероссийская олимпиада школьников', m:'Любой предмет · I уровень · Все вузы', tag:'100 баллов или БВИ'},
+  {t:'Олимпиада «Ломоносов» МГУ', m:'Математика, физика · II уровень · КубГТУ, КубГУ', tag:'до 10 доп. баллов'},
+  {t:'Олимпиада «Покори Воробьёвы горы»', m:'Литература, история · II уровень · КубГУ', tag:'до 10 доп. баллов'},
+  {t:'Олимпиада школьников КубГАУ', m:'Биология, химия · III уровень · КубГАУ', tag:'до 10 доп. баллов'},
+  {t:'ИТМО: программирование', m:'Информатика · II уровень · КубГТУ, КубГУ', tag:'до 10 доп. баллов'},
+  {t:'Олимпиада по агротехнологиям', m:'Биология · III уровень · КубГАУ', tag:'до 5 доп. баллов'},
+  {t:'Золотой значок ГТО', m:'— · ГТО · Все вузы', tag:'+2 к итоговому'},
+  {t:'Волонтёрская деятельность', m:'— · Портфолио · Все вузы', tag:'+1–3 доп. балла'},
+];
+
+const fmt = n => n.toLocaleString('ru-RU');
+const uniMinThr = uniKey => Math.min(...DIRECTIONS.filter(d=>d.uni===uniKey).map(d=>d.thr));
+const uniCount = uniKey => DIRECTIONS.filter(d=>d.uni===uniKey).length;
+
+/* ============ SMALL UI ============ */
+function Logo({onClick}){
+  return <div className="logo" onClick={onClick}><span className="a">POST</span><span className="b">SCHOOL</span></div>;
+}
+function Heart({on,onClick}){
+  return <button className={"heart"+(on?" on":"")} onClick={onClick} aria-label="избранное">{on?'♥':'♡'}</button>;
+}
+
+/* ============ LANDING ============ */
+function Landing({go}){
+  return (
+    <div className="fadein">
+      <div className="topbar">
+        <Logo onClick={()=>go('landing')}/>
+        <div className="nav-mid">
+          <button className="on">Главная</button>
+          <button onClick={()=>go('login','vuzy')}>Вузы</button>
+        </div>
+        <div style={{display:'flex',gap:12}}>
+          <button className="btn btn-ghost" onClick={()=>go('login')}>Войти</button>
+          <button className="btn btn-gold" onClick={()=>go('register')}>Регистрация</button>
+        </div>
+      </div>
+      <div className="hero">
+        <span className="eyebrow">Навигатор по вузам России</span>
+        <h1 className="serif">Найди свой <em>университет</em> по баллам ЕГЭ</h1>
+        <p>Анализ проходных баллов · олимпиады и доп.<br/>возможности · подбор направлений</p>
+        <div className="hero-cta">
+          <button className="btn btn-solid" onClick={()=>go('register')}>Подобрать вуз</button>
+          <button className="btn btn-ghost" onClick={()=>go('login','guest')}>Войти как гость</button>
+        </div>
+        <div className="hero-stats">
+          <div><div className="n">{Object.keys(UNIS).length}</div><div className="l">вузов</div></div>
+          <div><div className="n">{DIRECTIONS.length}</div><div className="l">направлений</div></div>
+          <div><div className="n">{Object.keys(CITIES).length}</div><div className="l">города</div></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============ AUTH ============ */
+function Auth({mode, go, onAuth}){
+  const reg = mode==='register';
+  const [name,setName]=useState(''); const [email,setEmail]=useState(''); const [pass,setPass]=useState('');
+  const [err,setErr]=useState(''); const [busy,setBusy]=useState(false);
+  const submit=async()=>{
+    setErr('');
+    try{
+      setBusy(true);
+      if(reg){
+        if(!name.trim()||!email.trim()||pass.length<6){ throw new Error('Заполните все поля, пароль — минимум 6 символов'); }
+        await api.register(name.trim(), email.trim(), pass);
+        onAuth({name:name.trim(), email:email.trim()});
+      }else{
+        await api.login(email.trim(), pass);
+        const m = await api.me();
+        onAuth({name: m ? m.full_name : (email.split('@')[0]||'Пользователь'), email: email.trim()});
+      }
+    }catch(e){ setErr(e.message||'Ошибка'); setBusy(false); }
+  };
+  const guest=()=>{ api.setToken(null); onAuth({name:'Гость', email:''}); };
+  return (
+    <div className="fadein">
+      <div className="topbar">
+        <Logo onClick={()=>go('landing')}/>
+        <button className="btn btn-ghost" onClick={()=>go('landing')}>← Назад</button>
+      </div>
+      <div className="auth-wrap">
+        <div className="auth-card">
+          <h2 className="serif">{reg?'Создать аккаунт':'Добро пожаловать'}</h2>
+          <div className="auth-sub">{reg?'Бесплатно и без SMS':'Войдите в аккаунт'}</div>
+          {reg && (
+            <label className="field"><span>Имя</span>
+              <input className="inp" placeholder="Иван Петров" value={name} onChange={e=>setName(e.target.value)}/>
+            </label>
+          )}
+          <label className="field"><span>Email</span>
+            <input className="inp" placeholder="example@mail.ru" value={email} onChange={e=>setEmail(e.target.value)}/>
+          </label>
+          <label className="field"><span>Пароль</span>
+            <input className="inp" type="password" placeholder={reg?'Минимум 6 символов':'••••••••'} value={pass} onChange={e=>setPass(e.target.value)}
+              onKeyDown={e=>{ if(e.key==='Enter') submit(); }}/>
+          </label>
+          {err && <div style={{color:'#c98b6a',fontSize:12,marginBottom:12}}>{err}</div>}
+          <button className="btn btn-gold" style={{width:'100%',marginTop:8,padding:'14px',opacity:busy?0.6:1}} disabled={busy} onClick={submit}>
+            {busy ? 'Подождите…' : (reg?'Зарегистрироваться':'Войти')}
+          </button>
+          <div className="auth-foot">
+            {reg ? <>Уже есть аккаунт? <button onClick={()=>go('login')}>Войти</button></>
+                 : <>Нет аккаунта? <button onClick={()=>go('register')}>Зарегистрироваться</button></>}
+          </div>
+          <a className="ghost-link" onClick={guest}>Продолжить как гость →</a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============ SCORING HELPERS ============ */
+function useScoring(scores, bonuses){
+  const bonusTotal = (bonuses.gto?2:0)+(bonuses.oly?5:0)+(bonuses.vol?2:0);
+  const yourScore = d => d.subj.reduce((s,k)=> s + (parseInt(scores[k]||0,10)||0), 0) + bonusTotal;
+  const statusOf = d => { const y=yourScore(d); if(y>=d.thr) return 'pass'; if(y>=d.thr-20) return 'close'; return 'far'; };
+  return {bonusTotal, yourScore, statusOf};
+}
+
+/* ============ PODBOR ============ */
+function Podbor({scores,setScores,bonuses,setBonuses,fav,toggleFav,openUni}){
+  const {yourScore,statusOf}=useScoring(scores,bonuses);
+  const [tab,setTab]=useState('all');
+  const hasScore = k => { const n=parseInt(scores[k],10); return !isNaN(n) && n>0; };
+  const eligible = DIRECTIONS.filter(d=> d.subj.every(k=>hasScore(k)));
+  const enriched = eligible.map(d=>({...d, y:yourScore(d), st:statusOf(d)}));
+  const pass = enriched.filter(d=>d.st==='pass').sort((a,b)=>(b.y-b.thr)-(a.y-a.thr));
+  const close = enriched.filter(d=>d.st==='close').sort((a,b)=>(b.y-b.thr)-(a.y-a.thr));
+  const far = enriched.filter(d=>d.st==='far').sort((a,b)=>(b.y-b.thr)-(a.y-a.thr));
+  const allOrdered = [...pass, ...close, ...far];
+  const shown = tab==='pass'?pass : tab==='close'?close : allOrdered;
+  const setSc=(k,v)=>{ v=v.replace(/[^0-9]/g,''); if(v!=='' && +v>100) v='100'; setScores({...scores,[k]:v}); };
+  const STATUS_LABEL={pass:'Пройдёте',close:'Близко',far:'Не хватает'};
+
+  return (
+    <div className="fadein">
+      <h1 className="page-h serif">Подбор</h1>
+      <div className="page-sub">Введите баллы — система подберёт направления</div>
+
+      <div className="panel" style={{marginTop:28}}>
+        <h2 className="serif">Баллы ЕГЭ</h2>
+        <div className="grid-scores">
+          {SUBJECTS.map(s=>(
+            <label className="sc-field" key={s.k}>
+              <span>{s.n}</span>
+              <input value={scores[s.k]||''} onChange={e=>setSc(s.k,e.target.value)} placeholder="0–100" inputMode="numeric"/>
+            </label>
+          ))}
+        </div>
+        <div className="label" style={{margin:'26px 0 12px'}}>Дополнительные баллы</div>
+        <div className="bonus-row">
+          <button className={"toggle-pill"+(bonuses.gto?" on":"")} onClick={()=>setBonuses({...bonuses,gto:!bonuses.gto})}>Золото ГТО +2</button>
+          <button className={"toggle-pill"+(bonuses.oly?" on":"")} onClick={()=>setBonuses({...bonuses,oly:!bonuses.oly})}>Победитель олимпиады +5</button>
+          <button className={"toggle-pill"+(bonuses.vol?" on":"")} onClick={()=>setBonuses({...bonuses,vol:!bonuses.vol})}>Волонтёрство +2</button>
+        </div>
+      </div>
+
+      <div className="res-tabs">
+        <button className={tab==='all'?'on':''} onClick={()=>setTab('all')}>Все ({enriched.length})</button>
+        <button className={tab==='pass'?'on':''} onClick={()=>setTab('pass')}>Пройдёте ({pass.length})</button>
+        <button className={tab==='close'?'on':''} onClick={()=>setTab('close')}>Близко ({close.length})</button>
+      </div>
+
+      {shown.length===0 && <div className="empty">Здесь пока пусто — измените баллы выше</div>}
+      {shown.map(d=>(
+        <div className="res-row" key={d.id}>
+          <div className="res-badge" onClick={()=>openUni(d.uni)} style={{cursor:'pointer'}}>{UNIS[d.uni].short}</div>
+          <div className="res-name">
+            <div className="t">{d.name}</div>
+            <div className="m">{UNIS[d.uni].short} · {d.code}</div>
+          </div>
+          <div className="res-score"><div className="big gold">{d.y}</div><div className="small">ваш</div></div>
+          <div className="res-score"><div className="big">{d.thr}</div><div className="small">порог</div></div>
+          <div className={"status "+d.st}>{STATUS_LABEL[d.st]}</div>
+          <Heart on={fav.has(d.id)} onClick={()=>toggleFav(d.id)}/>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ============ VUZY ============ */
+function Vuzy({openUni,scores,bonuses}){
+  const {statusOf}=useScoring(scores,bonuses);
+  const [q,setQ]=useState(''); const [city,setCity]=useState('all');
+  const [price,setPrice]=useState('all'); const [sort,setSort]=useState('name'); const [onlyPass,setOnlyPass]=useState(false);
+
+  let list = Object.entries(UNIS).map(([key,u])=>({key,...u, min:uniMinThr(key), cnt:uniCount(key)}));
+  if(q) list=list.filter(u=> (u.short+' '+u.full).toLowerCase().includes(q.toLowerCase()));
+  if(city!=='all') list=list.filter(u=>u.city===city);
+  if(price!=='all') list=list.filter(u=>u.price<=+price);
+  if(onlyPass) list=list.filter(u=> DIRECTIONS.some(d=>d.uni===u.key && statusOf(d)==='pass'));
+  if(sort==='name') list.sort((a,b)=>a.short.localeCompare(b.short,'ru'));
+  if(sort==='price') list.sort((a,b)=>a.price-b.price);
+  if(sort==='min') list.sort((a,b)=>a.min-b.min);
+
+  const dirCount = list.reduce((s,u)=>s+u.cnt,0);
+
+  return (
+    <div className="fadein">
+      <h1 className="page-h serif">Университеты</h1>
+      <div className="page-sub">{list.length} {list.length===1?'вуз':'вуза'} · {dirCount} направлений</div>
+
+      <div className="filters">
+        <input className="inp" placeholder="Поиск вуза…" value={q} onChange={e=>setQ(e.target.value)}/>
+        <select className="inp" value={city} onChange={e=>setCity(e.target.value)}>
+          <option value="all">Все города</option>
+          {Object.keys(CITIES).map(c=><option key={c} value={c}>{c}</option>)}
+        </select>
+        <select className="inp" value={price} onChange={e=>setPrice(e.target.value)}>
+          <option value="all">Любая цена</option>
+          <option value="13000">до 13 000 ₽</option>
+          <option value="16000">до 16 000 ₽</option>
+          <option value="20000">до 20 000 ₽</option>
+        </select>
+        <select className="inp" value={sort} onChange={e=>setSort(e.target.value)}>
+          <option value="name">По названию</option>
+          <option value="price">По цене</option>
+          <option value="min">По мин. баллу</option>
+        </select>
+        <button className={"toggle-pill"+(onlyPass?" on":"")} onClick={()=>setOnlyPass(!onlyPass)}>Куда я прохожу</button>
+      </div>
+
+      {list.length===0 && <div className="empty">Ничего не найдено — смягчите фильтры</div>}
+      <div className="cards">
+        {list.map(u=>(
+          <div className="uni-card" key={u.key} onClick={()=>openUni(u.key)}>
+            <h3 className="serif">{u.short}</h3>
+            <div className="full">{u.full}</div>
+            <div className="city">{u.city}</div>
+            <div className="uni-stats">
+              <div><div className="v">{u.cnt}</div><div className="k">направлений</div></div>
+              <div><div className="v">{u.min}</div><div className="k">мин. балл</div></div>
+            </div>
+            <div className="uni-price"><div className="p">{fmt(u.price)} ₽</div><div className="pk">платно/мес</div></div>
+            <div className="uni-tags">
+              {u.mil && <span className="uni-tag gold">Воен. кафедра</span>}
+              <span className="uni-tag">{u.exams ? 'Внутр. экзамены' : 'Только ЕГЭ'}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ============ UNI DETAIL ============ */
+function UniDetail({uniKey,back,scores,bonuses,fav,toggleFav}){
+  const u=UNIS[uniKey]; const {yourScore,statusOf}=useScoring(scores,bonuses);
+  const dirs=DIRECTIONS.filter(d=>d.uni===uniKey);
+  const c=CITIES[u.city];
+  const [tab,setTab]=useState('dirs');
+  const STATUS_LABEL={pass:'Пройдёте',close:'Близко',far:'Не хватает'};
+  const olyForUni = OLYMPIADS.filter(o=> o.m.includes(u.short) || o.m.includes('Все вузы'));
+
+  return (
+    <div className="fadein">
+      <a className="back-link" onClick={back}>← к списку вузов</a>
+      <h1 className="page-h serif gold">{u.short}</h1>
+      <div className="page-sub">{u.full} · {u.city}</div>
+
+      <div className="detail-tabs">
+        <button className={tab==='dirs'?'on':''} onClick={()=>setTab('dirs')}>Направления</button>
+        <button className={tab==='about'?'on':''} onClick={()=>setTab('about')}>О вузе</button>
+        <button className={tab==='bonus'?'on':''} onClick={()=>setTab('bonus')}>Доп. баллы</button>
+        <button className={tab==='city'?'on':''} onClick={()=>setTab('city')}>О городе</button>
+      </div>
+
+      {tab==='dirs' && dirs.map(d=>{
+        const st=statusOf(d);
+        return (
+          <div className="res-row" key={d.id}>
+            <div className="res-badge">{d.code}</div>
+            <div className="res-name"><div className="t">{d.name}</div><div className="m">{u.short} · {d.code}</div></div>
+            <div className="res-score"><div className="big gold">{yourScore(d)}</div><div className="small">ваш</div></div>
+            <div className="res-score"><div className="big">{d.thr}</div><div className="small">порог</div></div>
+            <div className={"status "+st}>{STATUS_LABEL[st]}</div>
+            <Heart on={fav.has(d.id)} onClick={()=>toggleFav(d.id)}/>
+          </div>
+        );
+      })}
+
+      {tab==='about' && (
+        <div className="about-list">
+          <div className="about-item"><span className="k">Полное название</span><span className="v" style={{fontSize:13,textAlign:'right',maxWidth:340}}>{u.full}</span></div>
+          <div className="about-item"><span className="k">Город</span><span className="v">{u.city}</span></div>
+          <div className="about-item"><span className="k">Направлений</span><span className="v">{uniCount(uniKey)}</span></div>
+          <div className="about-item"><span className="k">Минимальный балл</span><span className="v gold">{uniMinThr(uniKey)}</span></div>
+          <div className="about-item"><span className="k">Стоимость обучения</span><span className="v">{fmt(u.price)} ₽/мес</span></div>
+          <div className="about-item"><span className="k">Военная кафедра</span>{u.mil ? <span className="v gold">Есть</span> : <span className="v no">Нет</span>}</div>
+          <div className="about-item"><span className="k">Вступительные испытания</span><span className="v" style={{fontSize:13}}>{u.exams ? 'ЕГЭ + внутренние' : 'Только ЕГЭ'}</span></div>
+        </div>
+      )}
+
+      {tab==='bonus' && (
+        <div style={{marginTop:8}}>
+          <p style={{color:'var(--muted-2)',fontSize:13,lineHeight:1.7,maxWidth:640,marginBottom:8}}>
+            Дополнительные баллы, которые засчитываются при поступлении в {u.short}. Максимум — 10 баллов индивидуальных достижений.
+          </p>
+          {olyForUni.map((o,i)=>(
+            <div className="oly-row" key={i}>
+              <div><div className="t">{o.t}</div><div className="m">{o.m}</div></div>
+              <div className="oly-tag">{o.tag}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab==='city' && (
+        <div className="city-card">
+          <h4 className="serif">{u.city}</h4>
+          <div className="label">где находится {u.short}</div>
+          <p>{c.desc}</p>
+          <div className="city-facts">
+            <div><div className="v">{c.pop}</div><div className="k">население</div></div>
+            <div><div className="v">{c.clim}</div><div className="k">климат</div></div>
+            <div><div className="v">{c.life}</div><div className="k">студ. жизнь</div></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============ FAVORITES ============ */
+function Favorites({fav,toggleFav,scores,bonuses,openUni}){
+  const {yourScore,statusOf}=useScoring(scores,bonuses);
+  const items=DIRECTIONS.filter(d=>fav.has(d.id));
+  const STATUS_LABEL={pass:'Пройдёте',close:'Близко',far:'Не хватает'};
+  return (
+    <div className="fadein">
+      <h1 className="page-h serif">Избранное</h1>
+      <div className="page-sub">{items.length} сохранённых направлений</div>
+      {items.length===0 && <div className="empty">Добавляйте направления через ♡ в подборе и вузах</div>}
+      <div style={{marginTop:22}}>
+        {items.map(d=>{ const st=statusOf(d); return (
+          <div className="res-row" key={d.id}>
+            <div className="res-badge" onClick={()=>openUni(d.uni)} style={{cursor:'pointer'}}>{UNIS[d.uni].short}</div>
+            <div className="res-name"><div className="t">{d.name}</div><div className="m">{UNIS[d.uni].short} · {d.code}</div></div>
+            <div className="res-score"><div className="big gold">{yourScore(d)}</div><div className="small">ваш</div></div>
+            <div className="res-score"><div className="big">{d.thr}</div><div className="small">порог</div></div>
+            <div className={"status "+st}>{STATUS_LABEL[st]}</div>
+            <Heart on={true} onClick={()=>toggleFav(d.id)}/>
+          </div>
+        );})}
+      </div>
+    </div>
+  );
+}
+
+/* ============ OLYMPIADS ============ */
+function Olympiads(){
+  return (
+    <div className="fadein">
+      <h1 className="page-h serif">Олимпиады</h1>
+      <div className="page-sub">Возможности получить дополнительные баллы</div>
+      <div style={{marginTop:26}}>
+        {OLYMPIADS.map((o,i)=>(
+          <div className="oly-row" key={i}>
+            <div><div className="t">{o.t}</div><div className="m">{o.m}</div></div>
+            <div className="oly-tag">{o.tag}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ============ PROFILE ============ */
+function Profile({user,scores,bonuses,fav}){
+  const sum=SUBJECTS.reduce((s,x)=>s+(parseInt(scores[x.k]||0,10)||0),0);
+  const initial=(user.name||'Г').trim().charAt(0).toUpperCase();
+  const yes=v=> v?<span className="v gold">Да</span> : <span className="v no">Нет</span>;
+  return (
+    <div className="fadein">
+      <h1 className="page-h serif">Профиль</h1>
+      <div className="page-sub">Личные данные и статистика</div>
+      <div className="prof-id">
+        <div className="avatar serif">{initial}</div>
+        <div>
+          <div className="prof-name">{user.name}</div>
+          {user.email && <div className="prof-mail">{user.email}</div>}
+        </div>
+      </div>
+      <div className="stat-list">
+        <div className="stat-item"><span className="k">Сумма баллов ЕГЭ</span><span className="v">{sum}</span></div>
+        <div className="stat-item"><span className="k">Избранных направлений</span><span className="v">{fav.size}</span></div>
+        <div className="stat-item"><span className="k">Золотой знак ГТО</span>{yes(bonuses.gto)}</div>
+        <div className="stat-item"><span className="k">Доп. баллы за олимпиаду</span>{yes(bonuses.oly)}</div>
+        <div className="stat-item"><span className="k">Волонтёрство</span>{yes(bonuses.vol)}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ============ APP SHELL ============ */
+function AppShell({user, logout}){
+  const [tab,setTab]=useState('podbor');
+  const [uniKey,setUniKey]=useState(null);
+  const loggedIn = !!api.token;
+  const [scores,setScores]=useState(loggedIn ? {} : {rus:'80',mat:'90',inf:'90'});
+  const [bonuses,setBonuses]=useState(loggedIn ? {gto:false,oly:false,vol:false} : {gto:true,oly:false,vol:true});
+  const [fav,setFav]=useState(new Set());
+  const hydrated = useRef(false);
+
+  // load saved profile + favorites for authenticated users
+  useEffect(()=>{
+    if(!loggedIn){ hydrated.current=true; return; }
+    (async()=>{
+      const p = await api.profileGet();
+      if(p){
+        const sc={}; Object.entries(p.scores||{}).forEach(([k,v])=>{ sc[k]=String(v); });
+        setScores(sc);
+        setBonuses({gto:!!p.bonuses.gto, oly:!!p.bonuses.oly, vol:!!p.bonuses.vol});
+      }
+      const favs = await api.favList();
+      setFav(new Set(favs.map(f=>String(f.program_id))));
+      hydrated.current=true;
+    })();
+  },[]);
+
+  // persist profile changes (debounced) for authenticated users
+  useEffect(()=>{
+    if(!loggedIn || !hydrated.current) return;
+    const t=setTimeout(()=>{
+      const sc={}; Object.entries(scores).forEach(([k,v])=>{ const n=parseInt(v,10); if(n) sc[k]=n; });
+      api.profilePut(sc, bonuses);
+    }, 600);
+    return ()=>clearTimeout(t);
+  },[scores,bonuses]);
+
+  const toggleFav=id=>setFav(prev=>{
+    const n=new Set(prev);
+    if(n.has(id)){ n.delete(id); if(loggedIn) api.favDel(id); }
+    else { n.add(id); if(loggedIn) api.favAdd(id); }
+    return n;
+  });
+  const openUni=k=>{setUniKey(k); setTab('vuzy');};
+
+  const NAV=[['podbor','Подбор'],['vuzy','Вузы'],['olympiads','Олимпиады'],['favorites','Избранное'],['profile','Профиль']];
+  const goTab=t=>{setTab(t); setUniKey(null);};
+
+  return (
+    <div>
+      <div className="topbar">
+        <Logo onClick={()=>goTab('podbor')}/>
+        <button className="btn btn-ghost" onClick={logout}>Выйти</button>
+      </div>
+      <div className="shell">
+        <nav className="side">
+          {NAV.map(([k,l])=>(
+            <button key={k} className={tab===k?'on':''} onClick={()=>goTab(k)}>
+              <span className="dot"></span>{l}
+            </button>
+          ))}
+        </nav>
+        <div className="main">
+          {tab==='podbor' && <Podbor scores={scores} setScores={setScores} bonuses={bonuses} setBonuses={setBonuses} fav={fav} toggleFav={toggleFav} openUni={openUni}/>}
+          {tab==='vuzy' && uniKey && <UniDetail uniKey={uniKey} back={()=>setUniKey(null)} scores={scores} bonuses={bonuses} fav={fav} toggleFav={toggleFav}/>}
+          {tab==='vuzy' && !uniKey && <Vuzy openUni={openUni} scores={scores} bonuses={bonuses}/>}
+          {tab==='olympiads' && <Olympiads/>}
+          {tab==='favorites' && <Favorites fav={fav} toggleFav={toggleFav} scores={scores} bonuses={bonuses} openUni={openUni}/>}
+          {tab==='profile' && <Profile user={user} scores={scores} bonuses={bonuses} fav={fav}/>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============ ROOT ============ */
+function App(){
+  const [view,setView]=useState('landing'); // landing | register | login | app
+  const [user,setUser]=useState(null);
+  const go=(v)=>setView(v);
+  const onAuth=(u)=>{setUser(u); setView('app');};
+  const logout=()=>{api.setToken(null); setUser(null); setView('landing');};
+
+  // restore session if a valid token is stored
+  useEffect(()=>{
+    if(api.token){
+      api.me().then(m=>{ if(m){ setUser({name:m.full_name, email:m.email}); setView('app'); } else { api.setToken(null); } });
+    }
+  },[]);
+
+  if(view==='app' && user) return <AppShell user={user} logout={logout}/>;
+  if(view==='register') return <Auth mode="register" go={go} onAuth={onAuth}/>;
+  if(view==='login') return <Auth mode="login" go={go} onAuth={onAuth}/>;
+  return <Landing go={(v)=>go(v)}/>;
+}
+
+async function boot(){
+  try{
+    const [cities, unis, progs, olys] = await Promise.all([
+      fetch(API+"/api/cities").then(r=>r.json()),
+      fetch(API+"/api/universities").then(r=>r.json()),
+      fetch(API+"/api/programs").then(r=>r.json()),
+      fetch(API+"/api/olympiads").then(r=>r.json()),
+    ]);
+    CITIES = {}; cities.forEach(c=>{ CITIES[c.name] = {desc:c.description, pop:c.population, clim:c.climate, life:c.student_life}; });
+    UNIS = {}; unis.forEach(u=>{ UNIS[u.slug] = {short:u.short_name, full:u.full_name, city:u.city, price:u.tuition_month, mil:u.military_dept, exams:u.internal_exams}; });
+    DIRECTIONS = progs.map(p=>({id:String(p.id), uni:p.university_slug, name:p.name, code:p.code, thr:p.threshold, subj:p.subjects}));
+    OLYMPIADS = olys.map(o=>({t:o.title, m:o.meta, tag:o.bonus}));
+  }catch(e){
+    console.warn("API недоступно — используются встроенные демо-данные.", e);
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+}
+boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postschool
+      POSTGRES_PASSWORD: postschool
+      POSTGRES_DB: postschool
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postschool"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postschool:postschool@db:5432/postschool
+      SECRET_KEY: change-me-in-production
+      ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  frontend:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./frontend/index.html:/usr/share/nginx/html/index.html:ro
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  pgdata:
